@@ -125,5 +125,28 @@ def resolve_complaint(complaint_id):
     )
     return redirect("/admin")  # Redirect back to admin dashboard
 
+@app.route("/escalate", methods=["POST"])
+def escalate():
+    user_name = session.get("user_name")
+    user_email = session.get("user_email")
+    category = request.form.get("category")
+    description = request.form.get("description")
+    submitted_on = request.form.get("submitted_on")
+    status = request.form.get("status")
+
+    # Generate a custom escalation reference ID
+    escalation_id = f"ESC{str(ObjectId())[:6].upper()}"
+
+    return render_template(
+        "escalated.html",
+        name=user_name,
+        email=user_email,
+        category=category,
+        description=description,
+        submitted_on=submitted_on,
+        escalation_id=escalation_id,
+        status=status
+    )
+
 if __name__ == "__main__":
     app.run(debug=True)
