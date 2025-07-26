@@ -18,6 +18,7 @@
 ### For Frontend
 - Install node.js from `https://nodejs.org/en/download/current` (and verify version using `node -v` and `npm -v`)
 - Install all requirments using `pip install -r requirements.txt`
+- Install all requirments mentioned in `package.json` using `npm install`
 - Run `npm start` when inside the `client` folder in the terminal
 - [OPTIONAL] Install `ES7+ React/Redux/React-Native snippets` extension on VS Code
 

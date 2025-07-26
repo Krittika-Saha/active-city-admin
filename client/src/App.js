@@ -1,30 +1,6 @@
-// import logo from './logo.svg';
-// import './App.css';
-
-// function App() {
-//   return (
-//     <div className="App">
-//       <header className="App-header">
-//         <img src={logo} className="App-logo" alt="logo" />
-//         <p>
-//           Edit <code>src/App.js</code> and save to reload.
-//         </p>
-//         <a
-//           className="App-link"
-//           href="https://reactjs.org"
-//           target="_blank"
-//           rel="noopener noreferrer"
-//         >
-//           Learn React
-//         </a>
-//       </header>
-//     </div>
-//   );
-// }
-
-// export default App;
-
 import React, { useState, useEffect } from 'react'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Home from './components/Home';
 
 const App = () => {
   const [data, setData] = useState(null)
@@ -40,15 +16,13 @@ const App = () => {
   }, [])
 
   return (
-    <div>
-      <h1>Data from Flask API</h1>
-      {data ? (
-        <pre>"message": {data.message}, "status": {data.status}</pre>
-      ) : (
-        <p>Loading...</p>
-      )}
-    </div>
+     <Router>
+          <Routes>
+            <Route path="/" element={<Home />} />
+          </Routes>
+        </Router>
   )
 }
 
 export default App
+
