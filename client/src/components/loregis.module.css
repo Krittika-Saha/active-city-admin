@@ -1,0 +1,73 @@
+body {
+      font-family: 'Segoe UI', sans-serif;
+      background: url('https://images.unsplash.com/photo-1614850523011-8f49ffc73908?q=80&w=1920&auto=format&fit=crop&ixlib=rb-4.1.0') no-repeat center center fixed;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      justify-content: center;
+      align-items: center;
+      /* background-color: #014f86; */
+    }
+
+    .container {
+      background: white;
+      padding: 2rem 2.5rem;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      width: 300px;
+      margin: 20px auto;
+    }
+
+    .container h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #014f86;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.6rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      width: 100%;
+      background-color: #014f86;
+      color: white;
+      padding: 0.7rem;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+
+    button:hover {
+      background-color: #013b64;
+    }
+
+    .redirect {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .redirect a {
+      color: #014f86;
+      text-decoration: none;
+    }
+
+    .redirect a:hover {
+      text-decoration: underline;
+    }

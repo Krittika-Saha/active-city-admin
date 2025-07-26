@@ -41,6 +41,8 @@ const Home = () => {
 const backStyle = {
   background: "url('https://xenius.in/wp-content/uploads/2023/04/56_1024x720.jpg') no-repeat center center fixed",
   backgroundSize: 'cover',
+  minHeight: '100vh',
+  minWidth: '100vw',
 };
 const headerStyle = {
   background: 'rgba(13, 37, 63, 0.9)',
