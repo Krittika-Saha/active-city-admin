@@ -111,6 +111,31 @@ def admin_dashboard():
 
     return jsonify({"pending": pending, "resolved": resolved})
 
+@app.route("/escalate", methods=["POST"])
+def escalate():
+    # Accept JSON input from React frontend
+    data = request.get_json()
+    user_name = session.get("user_name")
+    user_email = session.get("user_email")
+    category = data.get("category")
+    description = data.get("description")
+    submitted_on = data.get("submitted_on")
+    status = data.get("status")
+
+    # Generate a custom escalation reference ID
+    escalation_id = f"ESC{str(ObjectId())[:6].upper()}"
+
+    # Optionally, you can save the escalation to the database here
+
+    return jsonify({
+        "name": user_name,
+        "email": user_email,
+        "category": category,
+        "description": description,
+        "submitted_on": submitted_on,
+        "escalation_id": escalation_id,
+        "status": status
+    }), 200
 
 @app.route("/resolve/<complaint_id>", methods=["POST"])
 def resolve_complaint(complaint_id):
