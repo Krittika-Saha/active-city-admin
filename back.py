@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, jsonify, session,ab
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 from datetime import datetime
+import random
 
 app = Flask(__name__)
 app.secret_key = "secretkey1234567890"  # Required for session management
@@ -59,6 +60,11 @@ def login():
 def login_failed():
     return render_template("login_failed.html")
 
+#to generate unique officer code
+def generate_officer_code():
+    return f"OFF-{random.randint(1000, 9999)}"
+
+
 # Passkey page for Mayor and Municipal Officer login
 @app.route("/passkey", methods=["GET", "POST"])
 def passkey():
@@ -75,6 +81,7 @@ def passkey():
             if user and user.get("role") == "official":
                 if not officers_col.find_one({"email": user["email"]}):
                     officers_col.insert_one({
+                        "officer_code": generate_officer_code(),
                         "name": user["name"],
                         "email": user["email"],
                         "department": department,
@@ -121,7 +128,7 @@ def register():
         return redirect("/login")
     return render_template("register.html")
 
-# Complaint submission page
+# ---------------- Submit Complaint ----------------
 @app.route("/submit-complaint", methods=["GET", "POST"])
 def submit_complaint():
     if request.method == "POST":
@@ -129,9 +136,10 @@ def submit_complaint():
         category = request.form.get("category")
         description = request.form.get("description")
 
+        # Ensure user is logged in
         user_id = session.get("user_id")
         if not user_id:
-            return redirect("/login")  # user not logged in
+            return redirect(url_for("login"))  # user not logged in
 
         user = users_col.find_one({"_id": ObjectId(user_id)})
         if not user:
@@ -141,18 +149,26 @@ def submit_complaint():
         submitted_on = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         status = "Pending"
 
-        complaints_col.insert_one({
+        # Insert complaint (including name/email for easy reference)
+        result = complaints_col.insert_one({
             "user_id": user_id,
+            "name": user_name,  # ADD name
+            "email": user_email,  # ADD email
             "title": title,
             "category": category,
             "description": description,
             "submitted_on": submitted_on,
             "status": status,
-            "assigned_officer": None  # No officer assigned yet
+            "assigned_officer": None
         })
 
+        complaint_id = str(result.inserted_id)
+        print("DEBUG: Complaint ID =", complaint_id)  # Debugging log
+
+        # Pass complaint_id to confirmation page
         return render_template(
             "confirmation.html",
+            complaint_id=complaint_id,
             name=user_name,
             email=user_email,
             category=category,
@@ -161,7 +177,41 @@ def submit_complaint():
             status=status
         )
 
-    return render_template("submit-complaint.html")  # for GET requests
+    return render_template("submit-complaint.html")
+
+# ---------------- Escalate Complaint ----------------
+@app.route("/escalate", methods=["POST"])
+def escalate():
+    complaint_id = request.form.get("complaint_id")
+    print("DEBUG: Escalate received complaint_id =", complaint_id)  # Debugging log
+
+    if not complaint_id:
+        return "Error: Complaint ID missing.", 400
+
+    # Update the complaint status to Escalated
+    result = complaints_col.update_one(
+        {"_id": ObjectId(complaint_id)},
+        {"$set": {"status": "Escalated", "escalated_on": datetime.now()}}
+    )
+
+    if result.modified_count == 0:
+        return "No complaint found or already escalated.", 404
+
+    # Fetch updated complaint data
+    complaint = complaints_col.find_one({"_id": ObjectId(complaint_id)})
+
+    escalation_id = f"ESC{str(ObjectId())[:6].upper()}"
+
+    return render_template(
+        "escalated.html",
+        escalation_id=escalation_id,
+        name=complaint["name"],
+        email=complaint["email"],
+        category=complaint["category"],
+        description=complaint["description"],
+        submitted_on=complaint.get("submitted_on", "Unknown"),
+        status="Escalated"
+    )
 
 @app.route("/take-up/<complaint_id>", methods=["POST"])
 def take_up_complaint(complaint_id):
@@ -344,29 +394,6 @@ def resolve_complaint(complaint_id):
         officers_col.update_one({"email": officer_email}, {"$set": {"is_available": True}})
 
     return redirect("/admin")
-
-@app.route("/escalate", methods=["POST"])
-def escalate():
-    user_name = session.get("user_name")
-    user_email = session.get("user_email")
-    category = request.form.get("category")
-    description = request.form.get("description")
-    submitted_on = request.form.get("submitted_on")
-    status = request.form.get("status")
-
-    # Generate a custom escalation reference ID
-    escalation_id = f"ESC{str(ObjectId())[:6].upper()}"
-
-    return render_template(
-        "escalated.html",
-        name=user_name,
-        email=user_email,
-        category=category,
-        description=description,
-        submitted_on=submitted_on,
-        escalation_id=escalation_id,
-        status=status
-    )
 
 if __name__ == "__main__":
     app.run(debug=True)
