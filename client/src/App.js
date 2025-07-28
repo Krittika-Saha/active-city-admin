@@ -5,6 +5,7 @@ import SubmitComplaint from './components/SubmitComplaint';
 import Login from './components/login';
 import Register from './components/register';
 import Admin from './components/Admin';
+import Escalated from './components/Escalated';
 
 
 const App = () => {

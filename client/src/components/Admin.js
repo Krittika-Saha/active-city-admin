@@ -71,6 +71,7 @@ const styles = {
 const Admin = () => {
   const [pending, setPending] = useState([]);
   const [resolved, setResolved] = useState([]);
+  const [escalated, setEscalated] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetchComplaints = () => {
@@ -83,14 +84,24 @@ const Admin = () => {
       .then(data => {
         setPending(data.pending || []);
         setResolved(data.resolved || []);
+        setEscalated(data.escalated || []);
       })
       .catch(() => {
         setPending([]);
         setResolved([]);
+        setEscalated([]);
       })
       .finally(() => {
         setLoading(false);
       });
+  };
+  const escalatedBoxStyle = {
+    backgroundColor: '#ffeaea',
+    borderLeft: '4px solid #c0392b',
+    padding: '20px',
+    marginBottom: '20px',
+    borderRadius: '10px',
+    boxShadow: '0 4px 8px rgba(200, 0, 0, 0.05)',
   };
 
   useEffect(() => {
@@ -108,6 +119,32 @@ const Admin = () => {
   return (
     <div style={styles.body}>
       <h1 style={styles.h1}>Admin Dashboard</h1>
+
+      <h2 style={styles.h2}>🚩 Escalated Complaints</h2>
+      {loading ? (
+        <p style={styles.empty}>Loading...</p>
+      ) : escalated.length === 0 ? (
+        <p style={styles.empty}>No escalated complaints.</p>
+      ) : (
+        escalated.map(c => (
+          <div key={c[0]} style={escalatedBoxStyle}>
+            <p style={styles.p}><strong style={styles.strong}>Escalation ID:</strong> {c[0]}</p>
+            <p style={styles.p}><strong style={styles.strong}>Name:</strong> {c[1]}</p>
+            <p style={styles.p}><strong style={styles.strong}>Email:</strong> {c[2]}</p>
+            <p style={styles.p}><strong style={styles.strong}>Category:</strong> {c[3]}</p>
+            <p style={styles.p}><strong style={styles.strong}>Description:</strong> {c[4]}</p>
+            <p style={styles.p}><strong style={styles.strong}>Submitted on:</strong> {c[5]}</p>
+            <p style={styles.p}><strong style={styles.strong}>Status:</strong> <span style={{ color: '#c0392b', fontWeight: 'bold' }}>{c[6]}</span></p>
+            <button
+              style={styles.button}
+              onClick={() => handleResolve(c[0])}
+            >
+              Mark as Resolved
+            </button>
+            <hr style={styles.hr} />
+          </div>
+        ))
+      )}
 
       <h2 style={styles.h2}>⏳ Pending Complaints</h2>
       {loading ? (

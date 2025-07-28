@@ -86,6 +86,7 @@ const SubmitComplaint = () => {
   });
   const [status, setStatus] = useState('');
   const [summary, setSummary] = useState(null);
+  const [escalation, setEscalation] = useState(null);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -115,6 +116,34 @@ const SubmitComplaint = () => {
       }
     } catch (error) {
       setStatus('Error submitting complaint.');
+    }
+  };
+
+  const handleEscalate = async () => {
+    if (!summary) return;
+    setStatus('Escalating...');
+    setEscalation(null);
+    try {
+      const response = await fetch('/escalate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category: summary.category,
+          description: summary.description,
+          submitted_on: summary.submitted_on,
+          status: summary.status,
+          complaint_id: summary._id || null,
+        }),
+      });
+      const result = await response.json();
+      if (response.ok) {
+        setStatus('');
+        setEscalation(result);
+      } else {
+        setStatus(result.message || 'Error escalating complaint.');
+      }
+    } catch (error) {
+      setStatus('Error escalating complaint.');
     }
   };
 
@@ -196,6 +225,17 @@ const SubmitComplaint = () => {
                 <span style={summaryLabelStyle}>Status:</span> <span style={{ color: 'green', fontWeight: 'bold' }}>{summary.status}</span>
               </div>
             </div>
+            <button style={buttonStyle} onClick={handleEscalate}>Escalate Complaint</button>
+            {escalation && (
+              <div style={{ marginTop: '2rem', background: '#e0f7fa', padding: '1rem', borderRadius: '8px' }}>
+                <h3 style={{ color: '#014f86' }}>Escalation Successful</h3>
+                <div><strong>Escalation ID:</strong> {escalation.escalation_id}</div>
+                <div><strong>Status:</strong> {escalation.status}</div>
+                <div><strong>Category:</strong> {escalation.category}</div>
+                <div><strong>Description:</strong> {escalation.description}</div>
+                <div><strong>Submitted on:</strong> {escalation.submitted_on}</div>
+              </div>
+            )}
             <a href="/" style={{ textDecoration: 'none', color: '#014f86', marginRight: '1rem' }}>Home</a>
           </>
         )}
