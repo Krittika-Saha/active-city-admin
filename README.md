@@ -8,11 +8,11 @@
 - [ ] React.js (With bootstrap)
 
 ### Backend
-- [ ] Python with Flask
+- [x] Python with Flask
 - [ ] Google Maps API integration
 
 ### Database
-- [ ] MongoDB
+- [x] MongoDB
 
 ## Instructions for Dev
 
