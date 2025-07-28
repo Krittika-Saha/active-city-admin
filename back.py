@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, jsonify, session,abort
+from flask import Flask, render_template, request, redirect, jsonify, session, abort, url_for
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 from datetime import datetime
@@ -45,10 +45,12 @@ def login():
             else:
                 session.pop("department", None)
 
-            # Redirect based on role
             if role == "citizen":
-                return redirect("/submit-complaint")
-            elif role in ["official", "mayor"]:
+                print("citizen logged in, redirecting to /submit-complaint")
+                # Redirect citizens to /submit-complaint
+                return redirect("/submit-complaint") 
+            else:
+                print(f"{role} logged in, redirecting to /official-dashboard")
                 return redirect("/passkey")
         else:
             return render_template("login.html", error="Invalid login credentials.")
@@ -135,6 +137,7 @@ def submit_complaint():
         title = request.form.get("title")
         category = request.form.get("category")
         description = request.form.get("description")
+        # location = request.form.get("location")
 
         # Ensure user is logged in
         user_id = session.get("user_id")
@@ -159,6 +162,8 @@ def submit_complaint():
             "description": description,
             "submitted_on": submitted_on,
             "status": status,
+            # "location": location,
+            "escalated_on": None,
             "assigned_officer": None
         })
 
@@ -174,6 +179,8 @@ def submit_complaint():
             category=category,
             description=description,
             submitted_on=submitted_on,
+            escalated_on=None,  # No escalation date yet
+            # location=location,  # ADD location
             status=status
         )
 
@@ -395,28 +402,28 @@ def resolve_complaint(complaint_id):
 
     return redirect("/admin")
 
-@app.route("/escalate", methods=["POST"])
-def escalate():
-    user_name = session.get("user_name")
-    user_email = session.get("user_email")
-    category = request.form.get("category")
-    description = request.form.get("description")
-    submitted_on = request.form.get("submitted_on")
-    status = request.form.get("status")
+# @app.route("/escalate", methods=["POST"])
+# def escalate():
+#     user_name = session.get("user_name")
+#     user_email = session.get("user_email")
+#     category = request.form.get("category")
+#     description = request.form.get("description")
+#     submitted_on = request.form.get("submitted_on")
+#     status = request.form.get("status")
 
-    # Generate a custom escalation reference ID
-    escalation_id = f"ESC{str(ObjectId())[:6].upper()}"
+#     # Generate a custom escalation reference ID
+#     escalation_id = f"ESC{str(ObjectId())[:6].upper()}"
 
-    return render_template(
-        "escalated.html",
-        name=user_name,
-        email=user_email,
-        category=category,
-        description=description,
-        submitted_on=submitted_on,
-        escalation_id=escalation_id,
-        status=status
-    )
+#     return render_template(
+#         "escalated.html",
+#         name=user_name,
+#         email=user_email,
+#         category=category,
+#         description=description,
+#         submitted_on=submitted_on,
+#         escalation_id=escalation_id,
+#         status=status
+#     )
 
 if __name__ == "__main__":
     app.run(debug=True)
