@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, jsonify, session, abort, url_for
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 from datetime import datetime
@@ -13,6 +14,51 @@ db = client["active_city"]
 users_col = db["users"]
 complaints_col = db["complaints"]
 officers_col = db["officers"]
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'  # Redirect to /login if user is not authenticated
+
+# User model for Flask-Login
+class User(UserMixin):
+    def __init__(self, user_data):
+        self.id = str(user_data['_id'])
+        self.email = user_data['email']
+        self.name = user_data['name']
+        self.role = user_data['role']
+        self.department = user_data.get('department')
+
+    @staticmethod
+    def get(user_id):
+        user_data = users_col.find_one({'_id': ObjectId(user_id)})
+        if user_data:
+            return User(user_data)
+        return None
+
+@login_manager.user_loader
+def load_user(user_id):
+    """Flask-Login hook to load a user from the database."""
+    return User.get(user_id)
+
+@app.before_request
+def logout_on_refresh():
+    """
+    Logs out the user on page refresh or subsequent navigation.
+    This is achieved by clearing the session on any request to a protected
+    page, unless a special 'just_logged_in' flag is present in the session.
+    This flag is set only upon a successful login or passkey verification.
+    """
+    # Endpoints that are public and should not trigger the logout logic.
+    public_endpoints = ['login', 'register', 'home', 'static', 'login_failed', 'logout']
+
+    if request.endpoint in public_endpoints or not current_user.is_authenticated:
+        return
+
+    # If the one-time 'just_logged_in' flag is present, consume it and allow the request.
+    if session.pop('just_logged_in', None):
+        return
+
+    # If the flag is not present, this is a subsequent request (e.g., refresh), so log the user out.
+    logout_user()
 
 #constant passkeys for mayor and municipal officer login or registration
 OFFICER_PASSKEY = "officer123"
@@ -26,36 +72,40 @@ def home():
 # Login page
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    if current_user.is_authenticated:
+        # If user is already logged in, redirect them appropriately
+        return(redirect(url_for("logout")))
+
     if request.method == "POST":
         email = request.form["email"]
         password = request.form["password"]
         role = request.form["role"].lower()
 
         # Verify user credentials
-        user = users_col.find_one({"email": email, "password": password, "role": role})
-        if user:
-            session["user_id"] = str(user["_id"])
-            session["user_name"] = user["name"]
-            session["user_email"] = email
-            session["user_role"] = role
-
-            # For officials, fetch department from DB
-            if role == "official":
-                session["department"] = user.get("department", "Unassigned")
-            else:
-                session.pop("department", None)
+        user_data = users_col.find_one({"email": email, "password": password, "role": role})
+        if user_data:
+            user_obj = User(user_data)
+            login_user(user_obj)  # This handles the session management
+            session['just_logged_in'] = True # Set one-time flag for logout-on-refresh
 
             if role == "citizen":
                 print("citizen logged in, redirecting to /submit-complaint")
                 # Redirect citizens to /submit-complaint
-                return redirect("/submit-complaint") 
+                return redirect(url_for("submit_complaint"))
             else:
                 print(f"{role} logged in, redirecting to /official-dashboard")
-                return redirect("/passkey")
+                return redirect(url_for("passkey"))
         else:
             return render_template("login.html", error="Invalid login credentials.")
 
     return render_template("login.html")
+
+@app.route("/logout")
+@login_required
+def logout():
+    """Logs the user out and redirects to the homepage."""
+    logout_user()
+    return redirect(url_for("login"))
 
 # Login Failed page
 @app.route("/login_failed")   
@@ -69,34 +119,38 @@ def generate_officer_code():
 
 # Passkey page for Mayor and Municipal Officer login
 @app.route("/passkey", methods=["GET", "POST"])
+@login_required
 def passkey():
+    if current_user.role == 'citizen':
+        return redirect(url_for('submit_complaint'))
+
     if request.method == "POST":
         entered_passkey = request.form.get("passkey")
 
         # Officer Passkey
         if entered_passkey == OFFICER_PASSKEY:
-            user_id = session.get("user_id")
-            user = users_col.find_one({"_id": ObjectId(user_id)})
-            department = session.get("department", "Unassigned")  # Use department from session
-
-            # Ensure only officials are added as officers
-            if user and user.get("role") == "official":
-                if not officers_col.find_one({"email": user["email"]}):
+            if current_user.role == "official":
+                if not officers_col.find_one({"email": current_user.email}):
                     officers_col.insert_one({
                         "officer_code": generate_officer_code(),
-                        "name": user["name"],
-                        "email": user["email"],
-                        "department": department,
+                        "name": current_user.name,
+                        "email": current_user.email,
+                        "department": current_user.department,
                         "is_available": True
                     })
-                return redirect("/official-dashboard")
+                session['just_logged_in'] = True # Set one-time flag
+                return redirect(url_for("official_dashboard"))
             else:
                 # If user is not an official, show error
                 return render_template("verification_failed.html")
 
         # Mayor Passkey
         elif entered_passkey == MAYOR_PASSKEY:
-            return redirect("/mayor-options")
+            if current_user.role == "mayor":
+                session['just_logged_in'] = True # Set one-time flag
+                return redirect(url_for("mayor_options"))
+            else:
+                return render_template("verification_failed.html")
 
         # Invalid Passkey
         else:
@@ -132,25 +186,19 @@ def register():
 
 # ---------------- Submit Complaint ----------------
 @app.route("/submit-complaint", methods=["GET", "POST"])
+@login_required
 def submit_complaint():
     if request.method == "POST":
         title = request.form.get("title")
         category = request.form.get("category")
         description = request.form.get("description")
-        # location = request.form.get("location")
 
-        # Ensure user is logged in
-        user_id = session.get("user_id")
-        if not user_id:
-            return redirect(url_for("login"))  # user not logged in
-
-        user = users_col.find_one({"_id": ObjectId(user_id)})
-        if not user:
-            return "User not found", 404
-
-        user_name, user_email = user["name"], user["email"]
+        user_id = current_user.id
+        user_name = current_user.name
+        user_email = current_user.email
         submitted_on = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         status = "Pending"
+
 
         # Insert complaint (including name/email for easy reference)
         result = complaints_col.insert_one({
@@ -188,6 +236,7 @@ def submit_complaint():
 
 # ---------------- Escalate Complaint ----------------
 @app.route("/escalate", methods=["POST"])
+@login_required
 def escalate():
     complaint_id = request.form.get("complaint_id")
     print("DEBUG: Escalate received complaint_id =", complaint_id)  # Debugging log
@@ -221,20 +270,17 @@ def escalate():
     )
 
 @app.route("/take-up/<complaint_id>", methods=["POST"])
+@login_required
 def take_up_complaint(complaint_id):
-    # Only officials can take up complaints
-    if session.get("user_role") != "official":
-        return redirect("/login")
+    if current_user.role != "official":
+        abort(403)  # Forbidden for non-officials
 
-    officer_email = session.get("user_email")
-    officer_name = session.get("user_name")  # Get officer name from session
-    officer_dept = session.get("department")
-
-    if not officer_email or not officer_dept:
-        return redirect("/login")
+    officer_email = current_user.email
+    officer_name = current_user.name
+    officer_dept = current_user.department
 
     # Try to assign the complaint to THIS officer, but only if:
-    # - it is still unassigned
+    # - it is still unassigned (or has an empty string)
     # - it belongs to the officer's department
     result = complaints_col.update_one(
         {
@@ -258,23 +304,20 @@ def take_up_complaint(complaint_id):
     return redirect("/official-dashboard")
 
 @app.route("/mark-resolved/<complaint_id>", methods=["POST"])
+@login_required
 def mark_resolved(complaint_id):
-    # Only officials can resolve complaints
-    if session.get("user_role") != "official":
-        return redirect("/login")
+    if current_user.role != "official":
+        abort(403)  # Forbidden for non-officials
 
-    officer_email = session.get("user_email")
-    officer_name = session.get("user_name")
-    officer_dept = session.get("department")
-
-    if not officer_email or not officer_dept:
-        return redirect("/login")
+    officer_email = current_user.email
+    officer_name = current_user.name
+    officer_dept = current_user.department
 
     # Update complaint: mark as resolved and ensure officer info is stored
     result = complaints_col.update_one(
         {
             "_id": ObjectId(complaint_id),
-            "assigned_officer": officer_email,  # Only if this officer took it up
+            "assigned_officer": officer_name,  # BUGFIX: Check against name, which is what take_up sets
             "category": officer_dept
         },
         {
@@ -296,6 +339,7 @@ def mark_resolved(complaint_id):
 
 # Officers page for the Users and Mayors  to veiw
 @app.route("/officers")
+@login_required
 def officers():
     # Fetch all officers
     all_officers = list(officers_col.find())
@@ -312,22 +356,24 @@ def officers():
 
 # Page for the Mayor after verification
 @app.route("/mayor-options")
+@login_required
 def mayor_options():
-    if session.get("user_role") != "mayor":
-        return redirect("/login")
+    if current_user.role != "mayor":
+        abort(403) # Forbidden for non-mayors
     return render_template("mayor_options.html")
 
 
 #Page showing only category of complaints Officer logged in by
 @app.route("/official-dashboard")
+@login_required
 def official_dashboard():
-    officer_email = session.get("user_email")  # Officer’s email from session
+    officer_email = current_user.email  # Officer’s email from session
     officer = officers_col.find_one({"email": officer_email})
     if not officer:
         return redirect("/login")
 
     # Filter complaints by officer's category
-    officer_category = session.get("department")
+    officer_category = current_user.department  # Assuming department is the category
     pending_complaints = complaints_col.find({"category": officer_category, "status": "Pending"})
     resolved_complaints = complaints_col.find({"category": officer_category, "status": "Resolved"})
 
@@ -340,6 +386,7 @@ def official_dashboard():
 
 # Admin Dashboard for the Mayor
 @app.route("/admin")
+@login_required
 def admin_dashboard():
     # Fetch pending complaints with user details
     pending = []
@@ -384,46 +431,6 @@ def admin_dashboard():
         escalated=escalated,
         resolved=resolved
     )
-
-@app.route("/resolve/<complaint_id>", methods=["POST"])
-def resolve_complaint(complaint_id):
-    officer_email = session.get("user_email")
-    officer = officers_col.find_one({"email": officer_email})
-    officer_name = officer["name"] if officer else "Unknown Officer"
-
-    complaints_col.update_one(
-        {"_id": ObjectId(complaint_id)},
-        {"$set": {"status": "Resolved", "assigned_officer": officer_name}}
-    )
-
-    # Optionally mark officer as available again
-    if officer:
-        officers_col.update_one({"email": officer_email}, {"$set": {"is_available": True}})
-
-    return redirect("/admin")
-
-# @app.route("/escalate", methods=["POST"])
-# def escalate():
-#     user_name = session.get("user_name")
-#     user_email = session.get("user_email")
-#     category = request.form.get("category")
-#     description = request.form.get("description")
-#     submitted_on = request.form.get("submitted_on")
-#     status = request.form.get("status")
-
-#     # Generate a custom escalation reference ID
-#     escalation_id = f"ESC{str(ObjectId())[:6].upper()}"
-
-#     return render_template(
-#         "escalated.html",
-#         name=user_name,
-#         email=user_email,
-#         category=category,
-#         description=description,
-#         submitted_on=submitted_on,
-#         escalation_id=escalation_id,
-#         status=status
-#     )
 
 if __name__ == "__main__":
     app.run(debug=True)
