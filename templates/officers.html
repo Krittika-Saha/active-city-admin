@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Officers - District Solutions</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: url('https://images.unsplash.com/photo-1614850523011-8f49ffc73908?q=80&w=1920&auto=format&fit=crop&ixlib=rb-4.1.0') no-repeat center center fixed;
+            background-size: cover;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #a39fd7;
+            margin-bottom: 30px;
+        }
+
+        .department {
+            margin-bottom: 40px;
+        }
+
+        .department h2 {
+            color: #a39fd7;
+            border-bottom: 2px solid #ccc;
+            padding-bottom: 5px;
+            margin-bottom: 20px;
+        }
+
+        .officer-card {
+            display: inline-block;
+            background: #ffffffcc;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            margin: 10px;
+            text-align: center;
+            width: 200px;
+        }
+
+        .officer-card img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+
+        .officer-id {
+            font-size: 0.75rem;
+            color: #333;
+            background-color: #f0f0f0;
+            padding: 4px;
+            margin-bottom: 6px;
+            border-radius: 4px;
+            word-break: break-all;
+            /* Forces long IDs to break into lines */
+            overflow-wrap: break-word;
+        }
+
+
+        .officer-name {
+            font-weight: bold;
+            margin-top: 10px;
+            color: #014f86;
+        }
+
+        .availability {
+            margin-top: 5px;
+            font-size: 0.9rem;
+        }
+
+        .available {
+            color: green;
+        }
+
+        .unavailable {
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Municipal Officers</h1>
+
+    {% for dept, officers in officers_by_dept.items() %}
+    <div class="department">
+        <h2>{{ dept }}</h2>
+        {% for officer in officers %}
+        <div class="officer-card">
+            <!-- Replace image with unique ID -->
+            <div class="officer-id"><strong>ID:</strong> {{ officer._id }}</div>
+
+            <div class="officer-name">{{ officer.name }}</div>
+            <div>{{ officer.email }}</div>
+            <div class="availability {{ 'available' if officer.is_available else 'unavailable' }}">
+                {{ 'Available' if officer.is_available else 'Unavailable' }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+</body>
+
+</html>

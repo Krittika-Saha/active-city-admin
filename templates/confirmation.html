@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Complaint_Summary</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: url('https://images.unsplash.com/photo-1614850523011-8f49ffc73908?q=80&w=1920&auto=format&fit=crop&ixlib=rb-4.1.0') no-repeat center center fixed;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+      min-height: 100vh;
+    }
+
+    .complaint-form-container {
+      background: rgba(186, 230, 229, 0.819);
+      padding: 2rem 2.5rem;
+      border-radius: 8px;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+      max-width: 500px;
+      width: 100%;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #014f86;
+    }
+
+    .summary-box h3 {
+      text-align: left;
+      color: #014f86;
+      margin-bottom: 1rem;
+      padding: 10px;
+    }
+
+    .summary-row {
+      display: flex;
+      margin-bottom: 0.7rem;
+    }
+
+    .summary-label {
+      width: 110px;
+      text-align: left;
+      font-weight: 600;
+      color: #014f86;
+      flex-shrink: 0;
+    }
+  </style>
+
+</head>
+
+<body>
+  <div class="complaint-form-container">
+    <h2>Complaint submitted Successfully</h2>
+    <nav style="text-align:right; margin-bottom: 1rem;">
+      <div class="summary-box">
+        <h3>Complaint Summary</h3>
+        <div class="summary-row">
+          <span class="summary-label">Name:</span> <span>{{ name }}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Email:</span> <span>{{ email }}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Category:</span> <span>{{ category }}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Description:</span> <span>{{ description }}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Submitted on:</span> <span>{{ submitted_on }}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Status:</span> <span style="color: green; font-weight: bold;">{{ status }}</span>
+        </div>
+      </div>
+
+      <!-- Escalation Section Starts Here -->
+      <div class="summary-row" style="display: flex; align-items: center; margin-top: 1.5rem;">
+        <span class="summary-label" style="color: rgb(174, 0, 0); margin-right: 10px;">
+          Submitted<br>long ago?
+        </span>
+
+        <form action="{{ url_for('escalate') }}" method="POST" style="margin: 0;">
+          <input type="hidden" name="complaint_id" value="{{ complaint_id }}">
+          <button type="submit"
+            style="background-color: #b80220; color: white; padding: 6px 14px; font-size: 1.05rem; border: none; border-radius: 6px; cursor: pointer;">
+            Raise Escalation
+          </button>
+        </form>
+
+      </div>
+      <!-- Escalation Section Ends Here -->
+      <a href="{{ url_for('home') }}" style="text-decoration:none; color:#014f86; margin-right: 1rem;">Home</a>
+      <a href="{{ url_for('officers') }}"
+        style="text-decoration:none; color:#014f86; font-weight: bold; display: inline-block; margin-top: 1rem;">
+        View Municipal Officers
+      </a>
+    </nav>
+  </div>
+</body>
+
+</html>

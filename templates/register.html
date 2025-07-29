@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register - District Solutions</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: url('https://images.unsplash.com/photo-1614850523011-8f49ffc73908?q=80&w=1920&auto=format&fit=crop&ixlib=rb-4.1.0') no-repeat center center fixed;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+      min-height: 100vh;
+    }
+
+    .register-container {
+      background: white;
+      padding: 2rem 2.5rem;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      width: 320px;
+    }
+
+    .register-container h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #014f86;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group select {
+      margin-top: 0.3rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.6rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      width: 100%;
+      background-color: #014f86;
+      color: white;
+      padding: 0.7rem;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+
+    select {
+      width: 100%;
+      padding: 0.6rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+      background-color: white;
+      appearance: none;
+      /* Removes default arrow style */
+      -webkit-appearance: none;
+      -moz-appearance: none;
+    }
+
+    button:hover {
+      background-color: #013b64;
+    }
+
+    .redirect {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .redirect a {
+      color: #014f86;
+      text-decoration: none;
+    }
+
+    .redirect a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="register-container">
+    <h2>User Registration</h2>
+    {% if error %}
+    <p style="color: red; text-align: center;">{{ error }}</p>
+    {% endif %}
+    <form action="{{ url_for('register') }}" method="POST" onsubmit="return validateForm()">
+      <div class="form-group">
+        <label for="fullname">Full Name</label>
+        <input type="text" id="fullname" name="fullname" required />
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required />
+      </div>
+
+      <div class="form-group">
+        <label for="role">Register as:</label>
+        <select id="role" name="role" required onchange="toggleDepartment()">
+          <option value="citizen">Citizen</option>
+          <option value="official">Municipal Official</option>
+          <option value="mayor">Mayor</option>
+        </select>
+      </div>
+
+      <div id="department-field" style="display: none; margin-top: 10px;">
+        <label for="department">Department:</label>
+        <select id="department" name="department">
+          <option value="">--Select Department--</option>
+          <option value="Roads">Roads</option>
+          <option value="Electricity">Electricity</option>
+          <option value="Garbage">Garbage</option>
+          <option value="Water">Water</option>
+          <option value="Others">Others</option>
+        </select>
+        <small>Required field if you're a municipal officer.</small>
+      </div>
+
+      <script>
+        function toggleDepartment() {
+          const role = document.getElementById('role').value;
+          const deptField = document.getElementById('department-field');
+          deptField.style.display = (role === 'official') ? 'block' : 'none';
+        }
+
+        function validateForm() {
+          const role = document.getElementById('role').value;
+          const department = document.getElementById('department').value;
+
+          if (role === 'official' && department === "") {
+            alert("Please select a department (required for Municipal Officials).");
+            return false;  // Prevent form submission
+          }
+          return true;
+        }
+      </script>
+
+      <button type="submit">Register</button>
+    </form>
+    <div class="redirect">
+      Already have an account? <a href="{{ url_for('login') }}">Login here</a><br />
+      <a href="{{ url_for('home') }}">← Back to Home</a>
+    </div>
+  </div>
+</body>
+</html>

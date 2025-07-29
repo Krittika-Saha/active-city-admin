@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Submit Complaint - District Solutions</title>
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+
+  <!-- Geoapify Autocomplete CSS -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/@geoapify/geocoder-autocomplete@1.2.0/styles/minimal.css"
+  />
+
+  <!-- ✅ Geoapify Autocomplete JS from jsDelivr -->
+  <script src="https://cdn.jsdelivr.net/npm/@geoapify/geocoder-autocomplete@1.2.0/dist/geocoder-autocomplete.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: url('https://images.unsplash.com/photo-1614850523011-8f49ffc73908?q=80&w=1920&auto=format&fit=crop&ixlib=rb-4.1.0') no-repeat center center fixed;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+      min-height: 100vh;
+    }
+
+    .complaint-form-container {
+      background: white;
+      padding: 2rem 2.5rem;
+      border-radius: 8px;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+      max-width: 500px;
+      width: 100%;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #014f86;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 0.6rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    button {
+      width: 100%;
+      background-color: #014f86;
+      color: white;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #013b64;
+    }
+
+    .status {
+      margin-top: 1rem;
+      text-align: center;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="complaint-form-container">
+    <nav style="text-align:right; margin-bottom: 1rem;">
+      <a href="{{ url_for('home') }}" style="text-decoration:none; color:#014f86; margin-right: 1rem;">Home</a>
+      <a href="#" onclick="logout()" style="text-decoration:none; color:#c00;">Logout</a>
+    </nav>
+
+    <h2>Submit a Complaint</h2>
+    <form action="{{ url_for('submit_complaint') }}" method="POST">
+      <div class="form-group">
+        <label for="title">Complaint Title</label>
+        <input type="text" id="title" name="title" required />
+      </div>
+
+      <div class="form-group">
+        <label for="category">Category</label>
+        <select id="category" name="category" required>
+          <option value="">-- Select Category --</option>
+          <option value="Roads">Roads</option>
+          <option value="Electricity">Electricity</option>
+          <option value="Water Supply">Water Supply</option>
+          <option value="Garbage">Garbage</option>
+          <option value="Others">Others</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea id="description" name="description" required></textarea>
+      </div>
+      <div class="form-group">
+        <label for="location">Enter Location:</label>
+        <div id="autocomplete" class="autocomplete-container"></div>
+
+    <!-- Hidden fields populated from autocomplete -->
+        <input type="hidden" name="location" id="location" />
+        <input type="hidden" name="lat" id="lat" />
+        <input type="hidden" name="lon" id="lon" />
+        <br>
+      </div>
+
+      <button type="submit">Submit</button>
+    </form>
+    <div class="status" id="statusMsg"></div>
+  </div>
+
+</body>
+
+<script>
+    const autocomplete = new Geoapify.GeocoderAutocomplete(
+        document.getElementById("autocomplete"),
+        "f7abe81d8fef46308d99063c807eae7d",
+        {
+          placeholder: "Type a location...",
+          lang: "en",
+          limit: 5,
+          type: "city"
+          }
+      );
+
+    autocomplete.on("select", (value) => {
+        if (value && value.properties) {
+            document.getElementById("location").value = value.properties.formatted;
+            document.getElementById("lat").value = value.properties.lat;
+            document.getElementById("lon").value = value.properties.lon;
+        }
+    });
+</script>
+
+</html>

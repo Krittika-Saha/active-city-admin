@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - District Solutions</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: url('https://images.unsplash.com/photo-1614850523011-8f49ffc73908?q=80&w=1920&auto=format&fit=crop&ixlib=rb-4.1.0') no-repeat center center fixed;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+      min-height: 100vh;
+    }
+
+    .login-container {
+      background: white;
+      padding: 2rem 2.5rem;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      width: 300px;
+    }
+
+    .login-container h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #014f86;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group select {
+      margin-top: 0.3rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.6rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      width: 100%;
+      background-color: #014f86;
+      color: white;
+      padding: 0.7rem;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+
+    button:hover {
+      background-color: #013b64;
+    }
+
+    select {
+      width: 100%;
+      padding: 0.6rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+      background-color: white;
+      appearance: none;
+      /* Removes default arrow style */
+      -webkit-appearance: none;
+      -moz-appearance: none;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    select:focus {
+      border-color: #014f86;
+      outline: none;
+      box-shadow: 0 0 3px rgba(1, 79, 134, 0.5);
+    }
+
+    .redirect {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .redirect a {
+      color: #014f86;
+      text-decoration: none;
+    }
+
+    .redirect a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="login-container">
+    <h2>User Login</h2>
+    <form action="{{ url_for('login') }}" method="POST" onsubmit="return validateLoginForm()">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required />
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required />
+        <label for="role">Login as:</label>
+        <select id="role" name="role" required>
+          <option value="citizen">Citizen</option>
+          <option value="official">Municipal Official</option>
+          <option value="mayor">Mayor</option>
+        </select>
+
+        <!-- Department Dropdown (hidden initially) -->
+        <div id="department-container" style="display:none; margin-top:10px;">
+          <label for="department">Department <small>(required if you're a municipal officer)</small></label>
+          <select name="department" id="department">
+            <option value="">-- Select Department --</option>
+            <option value="Roads">Roads</option>
+            <option value="Garbage">Garbage</option>
+            <option value="Electricity">Electricity</option>
+            <option value="Water Supply">Water Supply</option>
+            <option value="Others">Others</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit">Login</button>
+    </form>
+    <div class="redirect">
+      Don't have an account? <a href="{{ url_for('register') }}">Register here</a><br />
+      <a href="{{ url_for('home') }}">← Back to Home</a>
+    </div>
+  </div>
+
+  <script>
+    // Show department field only for municipal officials
+    document.getElementById('role').addEventListener('change', function () {
+      const departmentContainer = document.getElementById('department-container');
+      if (this.value === "official") {
+        departmentContainer.style.display = "block";
+        document.getElementById('department').setAttribute('required', 'required');
+      } else {
+        departmentContainer.style.display = "none";
+        document.getElementById('department').removeAttribute('required');
+      }
+    });
+
+    // Validate form before submission
+    function validateLoginForm() {
+      const role = document.getElementById('role').value;
+      const department = document.getElementById('department').value;
+      if (role === "official" && department === "") {
+        alert("Please select a department (required for Municipal Officials).");
+        return false;
+      }
+      return true;
+    }
+  </script>
+</body>
+</html>

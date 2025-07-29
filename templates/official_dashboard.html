@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{ officer_category }} Complaints Dashboard</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(to right, #0d1b2a, #000000);
+            color: #f1f1f1;
+            margin: 0;
+            padding: 2rem;
+        }
+
+        h1 {
+            text-align: center;
+            color: #f0c020;
+            margin-bottom: 2rem;
+        }
+
+        h2 {
+            color: #ffd369;
+            border-bottom: 2px solid #ffd369;
+            padding-bottom: 0.5rem;
+            margin-top: 2rem;
+        }
+
+        .complaint-card {
+            background: #ffffff;
+            color: #333;
+            padding: 1rem 1.2rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .complaint-card p {
+            margin: 0.3rem 0;
+        }
+
+        button {
+            background-color: #014f86;
+            color: white;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            margin-right: 5px;
+        }
+
+        button:hover {
+            background-color: #013b64;
+        }
+
+        .status-resolved {
+            border-left: 5px solid green;
+        }
+
+        .status-pending {
+            border-left: 5px solid red;
+        }
+
+        .assigned-officer {
+            font-size: 0.9rem;
+            color: #444;
+            margin-top: 0.4rem;
+        }
+
+        .no-complaints {
+            text-align: center;
+            color: #ccc;
+            font-style: italic;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>{{ officer_category }} Complaints Dashboard</h1>
+
+    <h2>Pending Complaints</h2>
+    {% for comp in pending_complaints %}
+    <div class="complaint-card status-pending">
+        <p><strong>ID:</strong> {{ comp._id }}</p>
+        <p><strong>Name:</strong> {{ comp.name }}</p>
+        <p><strong>Description:</strong> {{ comp.description }}</p>
+
+        {% if not comp.assigned_officer %}
+        <form action="{{ url_for('take_up_complaint', complaint_id=comp._id) }}" method="POST" style="display:inline;">
+            <button type="submit">Take Up</button>
+        </form>
+        {% else %}
+        <p class="assigned-officer"><strong>Assigned Officer:</strong> {{ comp.assigned_officer }}</p>
+        {% endif %}
+
+        <form action="{{ url_for('mark_resolved', complaint_id=comp._id) }}" method="POST" style="display:inline;">
+            <button type="submit">Mark as Resolved</button>
+        </form>
+    </div>
+    {% else %}
+    <p class="no-complaints">No pending complaints.</p>
+    {% endfor %}
+
+    <h2>Resolved Complaints</h2>
+    {% for comp in resolved_complaints %}
+    <div class="complaint-card status-resolved">
+        <p><strong>ID:</strong> {{ comp._id }}</p>
+        <p><strong>Name:</strong> {{ comp.name }}</p>
+        <p><strong>Description:</strong> {{ comp.description }}</p>
+        <p class="assigned-officer"><strong>Assigned Officer:</strong> {{ comp.assigned_officer or "N/A" }}</p>
+    </div>
+    {% else %}
+    <p class="no-complaints">No resolved complaints.</p>
+    {% endfor %}
+</body>
+
+</html>
