@@ -279,6 +279,9 @@ def take_up_complaint(complaint_id):
     officer_name = current_user.name
     officer_dept = current_user.department
 
+    if not officer_email or not officer_dept:
+        return redirect("/login")
+
     # Try to assign the complaint to THIS officer, but only if:
     # - it is still unassigned (or has an empty string)
     # - it belongs to the officer's department

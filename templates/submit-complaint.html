@@ -122,47 +122,6 @@
         </select>
       </div>
 
-      <div class="form-group">
-        <label for="description">Description</label>
-        <textarea id="description" name="description" required></textarea>
-      </div>
-      <div class="form-group">
-        <label for="location">Enter Location:</label>
-        <div id="autocomplete" class="autocomplete-container"></div>
-
-    <!-- Hidden fields populated from autocomplete -->
-        <input type="hidden" name="location" id="location" />
-        <input type="hidden" name="lat" id="lat" />
-        <input type="hidden" name="lon" id="lon" />
-        <br>
-      </div>
-
-      <button type="submit">Submit</button>
-    </form>
-    <div class="status" id="statusMsg"></div>
-  </div>
-
-</body>
-
-<script>
-    const autocomplete = new Geoapify.GeocoderAutocomplete(
-        document.getElementById("autocomplete"),
-        "f7abe81d8fef46308d99063c807eae7d",
-        {
-          placeholder: "Type a location...",
-          lang: "en",
-          limit: 5,
-          type: "city"
-          }
-      );
-
-    autocomplete.on("select", (value) => {
-        if (value && value.properties) {
-            document.getElementById("location").value = value.properties.formatted;
-            document.getElementById("lat").value = value.properties.lat;
-            document.getElementById("lon").value = value.properties.lon;
-        }
-    });
-</script>
+      
 
 </html>
